@@ -1,18 +1,23 @@
 const fs = require("fs");
 const replace = (path, from, to) => {
-  fs.readFile(path, "utf8", (err, data) => {
-    if (err) {
-      return console.log(err);
-    } else {
-      let result = data;
-      for (let i = 0; i < to.length; i++) {
-        result = result.replace(new RegExp(from[i], "g"), to[i]);
+  if (from.length == to.length) {
+    fs.readFile(path, "utf8", (err, data) => {
+      if (err) {
+        return console.log(err);
+      } else {
+        let result = data;
+        for (let i = 0; i < to.length; i++) {
+          result = result.replace(new RegExp(from[i], "g"), to[i]);
+        }
+        fs.writeFileSync(path, result, "utf8", err => {
+          if (err) return console.log(err);
+        });
       }
-      fs.writeFileSync(path, result, "utf8", err => {
-        if (err) return console.log(err);
-      });
-    }
-  });
+    });
+  } else {
+    console.log('"from" and "to" have to have the same length.');
+    throw RangeError;
+  }
 };
 const filesInDirectory = dir => {
   const list = traversable(fs.readdirSync(dir))
