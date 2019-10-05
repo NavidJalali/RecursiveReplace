@@ -1,6 +1,6 @@
 ## RecursiveReplace
 
-Looks for every file in a specified directory and all subdirectories, and replaces a set of string with another set of strings.
+Looks for every file in a specified directory and all subdirectories, and replaces a set of strings with another set of strings.
 
 #### How To Use
 
