@@ -1,56 +1,58 @@
-const fs = require("fs");
-const replace = (path, from, to) => {
-  if (from.length == to.length) {
-    fs.readFile(path, "utf8", (err, data) => {
-      if (err) {
-        return console.log(err);
-      } else {
-        let result = data;
-        for (let i = 0; i < to.length; i++) {
-          result = result.replace(new RegExp(from[i], "g"), to[i]);
-        }
-        fs.writeFileSync(path, result, "utf8", err => {
-          if (err) return console.log(err);
-        });
-      }
-    });
-  } else {
-    console.log('"from" and "to" have to have the same length.');
-    throw RangeError;
-  }
-};
-const filesInDirectory = dir => {
-  const list = traversable(fs.readdirSync(dir))
-    .filter(path => fs.lstatSync(dir + "/" + path).isFile())
-    .map(file => {
-      return dir + "/" + file;
-    });
-  return list;
-};
-const directoriesInDirectory = dir => {
-  const list = traversable(fs.readdirSync(dir))
-    .filter(path => fs.lstatSync(dir + "/" + path).isDirectory())
-    .map(folder => {
-      return dir + "/" + folder;
-    });
-  return list;
-};
-const traversable = directories => {
-  return directories.filter(dir => dir != ".DS_Store");
-};
-const findAllFiles = dir => {
-  let files = filesInDirectory(dir);
-  let directories = directoriesInDirectory(dir);
-  for (directory of directories) {
-    files = [...files, ...findAllFiles(directory)];
-  }
-  return files;
-};
-const replaceInFiles = (path, from, to) => {
-  const files = findAllFiles(path);
-  for (file of files) {
-    replace(file, from, to);
-  }
-};
+const fs = require('fs')
 
-module.exports = replaceInFiles;
+const blackList = ['.DS_Store']
+
+const replace = (path, transformMap) => {
+  fs.readFile(path, 'utf8', (err, data) => {
+    if (err) {
+      console.err(`Could not read file from ${path}`)
+      throw err
+    } else {
+      let result = data
+      Object.keys(transformMap).forEach(
+        key =>
+          (result = result.replace(new RegExp(key, 'g'), transformMap[key]))
+      )
+      fs.writeFileSync(path, result, 'utf8', err => {
+        if (err) {
+          console.err(`Could not write result to ${path}`)
+          throw err
+        }
+      })
+    }
+  })
+}
+
+const filesInDirectory = dir => {
+  return traversable(fs.readdirSync(dir))
+    .filter(path => fs.lstatSync(`${dir}/${path}`).isFile())
+    .map(file => `${dir}/${file}`)
+}
+
+const directoriesInDirectory = dir => {
+  return traversable(fs.readdirSync(dir))
+    .filter(path => fs.lstatSync(dir + '/' + path).isDirectory())
+    .map(folder => dir + '/' + folder)
+}
+
+const traversable = (directories, blacklist = blackList) => {
+  return directories.filter(dir => !blackList.includes(dir))
+}
+
+const findAllFiles = dir => {
+  let files = filesInDirectory(dir)
+  const directories = directoriesInDirectory(dir)
+  for (directory of directories) {
+    files = [...files, ...findAllFiles(directory)]
+  }
+  return files
+}
+
+const replaceInFiles = (path, transformMap) => {
+  const files = findAllFiles(path)
+  for (file of files) {
+    replace(file, transformMap)
+  }
+}
+
+module.exports = replaceInFiles
